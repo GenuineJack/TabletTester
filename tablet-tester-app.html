@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tablet Tester - Test PDFs Across Devices</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Base Styles */
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #f8fafc;
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        /* Screen Management */
+        .screen {
+            display: none;
+            min-height: 100vh;
+        }
+
+        .screen.active {
+            display: block;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Upload Screen */
+        .app-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .upload-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .drop-zone {
+            background: white;
+            border: 3px dashed #e5e7eb;
+            border-radius: 20px;
+            padding: 60px 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .drop-zone::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .drop-zone:hover {
+            border-color: #6366f1;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .drop-zone.drag-over {
+            border-color: #6366f1;
+            background: #f0f9ff;
+        }
+
+        .drop-zone.drag-over::before {
+            opacity: 0.05;
+        }
+
+        .upload-icon {
+            display: inline-block;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .browse-button {
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            color: white;
+            padding: 12px 32px;
+            border-radius: 30px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .browse-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        /* Loading Screen */
+        #loadingScreen {
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            display: none; /* Hidden by default */
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #loadingScreen.active {
+            display: flex; /* Show as flex when active */
+        }
+
+        .loading-container {
+            text-align: center;
+            color: white;
+        }
+
+        .tablet-loader {
+            width: 120px;
+            height: 160px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            margin: 0 auto 40px;
+            position: relative;
+            animation: tilt 2s ease-in-out infinite;
+        }
+
+        @keyframes tilt {
+            0%, 100% {
+                transform: rotate(-3deg);
+            }
+            50% {
+                transform: rotate(3deg);
+            }
+        }
+
+        .tablet-screen-loader {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .tablet-screen-loader::after {
+            content: '';
+            position: absolute;
+            top: -100%;
+            left: 0;
+            right: 0;
+            height: 100%;
+            background: linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.4) 50%, transparent 100%);
+            animation: shimmer 1.5s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                top: -100%;
+            }
+            100% {
+                top: 100%;
+            }
+        }
+
+        .loading-message {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            animation: fadeText 3s ease-in-out infinite;
+        }
+
+        @keyframes fadeText {
+            0%, 100% {
+                opacity: 0.8;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .loading-dots {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .loading-dots span {
+            width: 8px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            animation: bounce 1.4s ease-in-out infinite;
+        }
+
+        .loading-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .loading-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes bounce {
+            0%, 80%, 100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+        }
+
+        /* Preview Screen */
+        .back-button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #6366f1;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            border: none;
+            background: white;
+            cursor: pointer;
+        }
+
+        .back-button:hover {
+            background: #f3f4f6;
+        }
+
+        /* Main Tablet Preview */
+        .main-preview-section {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .main-tablet-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .main-tablet-frame {
+            width: 600px;
+            height: 450px;
+            background: #1a1a1a;
+            border-radius: 36px;
+            padding: 20px;
+            position: relative;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.3),
+                inset 0 2px 4px rgba(255, 255, 255, 0.1);
+        }
+
+        .tablet-notch {
+            position: absolute;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 4px;
+            background: #2a2a2a;
+            border-radius: 2px;
+        }
+
+        .tablet-screen {
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .tablet-home-indicator {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: #3a3a3a;
+            border-radius: 2px;
+        }
+
+        .pdf-viewer {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: white;
+        }
+
+        /* Device Grid */
+        .device-grid-section {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .device-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 24px;
+        }
+
+        .device-card {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .device-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .mini-tablet {
+            width: 80px;
+            height: 100px;
+            background: #2a2a2a;
+            border-radius: 12px;
+            margin: 0 auto 12px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mini-tablet-screen {
+            width: calc(100% - 8px);
+            height: calc(100% - 8px);
+            background: #e5e7eb;
+            border-radius: 8px;
+        }
+
+        .device-name {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 4px;
+        }
+
+        .device-size {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-bottom: 12px;
+        }
+
+        .device-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        /* Indicators */
+        .indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .indicator-success {
+            background: #10b981;
+        }
+
+        .indicator-warning {
+            background: #f59e0b;
+        }
+
+        .indicator-error {
+            background: #ef4444;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1f2937;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            margin-bottom: 8px;
+            max-width: 200px;
+            white-space: normal;
+            text-align: left;
+            z-index: 10;
+        }
+
+        .tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: #1f2937;
+        }
+
+        .device-card:hover .tooltip {
+            opacity: 1;
+        }
+
+        /* Summary Section */
+        .summary-section {
+            margin-bottom: 40px;
+        }
+
+        .summary-card {
+            background: white;
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            text-align: center;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-tablet-frame {
+                width: 100%;
+                max-width: 400px;
+                height: 300px;
+            }
+
+            .device-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 16px;
+            }
+
+            .drop-zone {
+                padding: 40px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Screen 1: Upload Screen -->
+    <div id="uploadScreen" class="screen active">
+        <div class="container mx-auto px-4 py-12 max-w-4xl">
+            <header class="text-center mb-12">
+                <div class="flex justify-center mb-6">
+                    <div class="app-icon">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor" stroke-width="2"/>
+                            <path d="M9 6H15M9 10H15M9 14H12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                </div>
+                <h1 class="text-5xl font-bold text-gray-900 mb-4">Tablet Tester</h1>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                    See how your PDF looks across 25+ tablet devices. Test compatibility, readability, and layout in seconds.
+                </p>
+            </header>
+
+            <div class="upload-container">
+                <div id="dropZone" class="drop-zone">
+                    <input type="file" id="fileInput" accept=".pdf" class="hidden">
+                    <div class="upload-content">
+                        <div class="upload-icon mb-6">
+                            <svg width="72" height="72" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 15L12 3M12 3L16 7M12 3L8 7" stroke="url(#gradient)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M2 17L2 19C2 20.1046 2.89543 21 4 21L20 21C21.1046 21 22 20.1046 22 19L22 17" stroke="url(#gradient)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <defs>
+                                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#6366f1"/>
+                                        <stop offset="100%" stop-color="#a855f7"/>
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                        </div>
+                        <h3 class="text-2xl font-semibold text-gray-800 mb-2">Drop your PDF here</h3>
+                        <p class="text-gray-600 mb-4">or click to browse your files</p>
+                        <button class="browse-button">
+                            Choose PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-12 text-center">
+                <p class="text-sm text-gray-500 mb-4">Supports interactive PDFs with forms, links, and embedded media</p>
+                <div class="flex justify-center gap-8 text-sm text-gray-600">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        <span>Instant preview</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        <span>25+ devices</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        <span>Smart analysis</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Interstitial -->
+    <div id="loadingScreen" class="screen">
+        <div class="loading-container">
+            <div class="loading-animation">
+                <div class="tablet-loader">
+                    <div class="tablet-screen-loader"></div>
+                </div>
+            </div>
+            <h2 id="loadingMessage" class="loading-message">Preparing your PDF for its tablet journey...</h2>
+            <div class="loading-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen 2: Preview Screen -->
+    <div id="previewScreen" class="screen">
+        <div class="container mx-auto px-4 py-8 max-w-7xl">
+            <!-- Header with back button -->
+            <header class="flex items-center justify-between mb-8">
+                <button id="backButton" class="back-button">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    <span>New PDF</span>
+                </button>
+                <div class="text-center">
+                    <h2 class="text-2xl font-bold text-gray-900">PDF Preview & Compatibility</h2>
+                    <p id="pdfName" class="text-sm text-gray-600 mt-1"></p>
+                </div>
+                <div class="w-24"></div> <!-- Spacer for centering -->
+            </header>
+
+            <!-- Main Preview -->
+            <div class="main-preview-section mb-12">
+                <h3 class="text-lg font-semibold text-gray-700 mb-4 text-center">Live Preview - iPad Pro 12.9"</h3>
+                <div class="main-tablet-container">
+                    <div class="main-tablet-frame">
+                        <div class="tablet-notch"></div>
+                        <div class="tablet-screen">
+                            <iframe id="mainPdfViewer" class="pdf-viewer"></iframe>
+                        </div>
+                        <div class="tablet-home-indicator"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Device Grid -->
+            <div class="device-grid-section">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-semibold text-gray-800">Device Compatibility Check</h3>
+                    <div class="flex gap-4 text-sm">
+                        <div class="flex items-center gap-2">
+                            <span class="indicator indicator-success"></span>
+                            <span class="text-gray-600">Excellent</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="indicator indicator-warning"></span>
+                            <span class="text-gray-600">Good</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="indicator indicator-error"></span>
+                            <span class="text-gray-600">Issues</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="deviceGrid" class="device-grid">
+                    <!-- Devices will be dynamically inserted here -->
+                </div>
+            </div>
+
+            <!-- Summary Stats -->
+            <div class="summary-section mt-12">
+                <div class="summary-card">
+                    <h4 class="text-lg font-semibold text-gray-800 mb-4">Compatibility Summary</h4>
+                    <div class="grid grid-cols-3 gap-4 text-center">
+                        <div>
+                            <div id="excellentCount" class="text-3xl font-bold text-green-600">0</div>
+                            <div class="text-sm text-gray-600">Excellent</div>
+                        </div>
+                        <div>
+                            <div id="goodCount" class="text-3xl font-bold text-yellow-600">0</div>
+                            <div class="text-sm text-gray-600">Good</div>
+                        </div>
+                        <div>
+                            <div id="issuesCount" class="text-3xl font-bold text-red-600">0</div>
+                            <div class="text-sm text-gray-600">Has Issues</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tablet device data with viewport dimensions
+        const tablets = [
+            // Apple iPads
+            { brand: 'Apple', name: 'iPad Pro 12.9"', width: 1024, height: 1366, ppi: 264 },
+            { brand: 'Apple', name: 'iPad Pro 11"', width: 834, height: 1194, ppi: 264 },
+            { brand: 'Apple', name: 'iPad Air 10.9"', width: 820, height: 1180, ppi: 264 },
+            { brand: 'Apple', name: 'iPad 10.2"', width: 810, height: 1080, ppi: 264 },
+            { brand: 'Apple', name: 'iPad mini 8.3"', width: 744, height: 1133, ppi: 326 },
+            
+            // Samsung Galaxy Tabs
+            { brand: 'Samsung', name: 'Galaxy Tab S9 Ultra', width: 1848, height: 2960, ppi: 266 },
+            { brand: 'Samsung', name: 'Galaxy Tab S9+', width: 1752, height: 2800, ppi: 266 },
+            { brand: 'Samsung', name: 'Galaxy Tab S9', width: 1600, height: 2560, ppi: 274 },
+            { brand: 'Samsung', name: 'Galaxy Tab A8', width: 800, height: 1280, ppi: 216 },
+            { brand: 'Samsung', name: 'Galaxy Tab S6 Lite', width: 800, height: 1280, ppi: 224 },
+            
+            // Amazon Fire
+            { brand: 'Amazon', name: 'Fire HD 10 Plus', width: 1200, height: 1920, ppi: 224 },
+            { brand: 'Amazon', name: 'Fire HD 8 Plus', width: 800, height: 1280, ppi: 189 },
+            { brand: 'Amazon', name: 'Fire HD 10', width: 1200, height: 1920, ppi: 224 },
+            { brand: 'Amazon', name: 'Fire HD 8', width: 800, height: 1280, ppi: 189 },
+            { brand: 'Amazon', name: 'Fire 7', width: 600, height: 1024, ppi: 171 },
+            
+            // Microsoft Surface
+            { brand: 'Microsoft', name: 'Surface Pro 9', width: 1920, height: 2880, ppi: 267 },
+            { brand: 'Microsoft', name: 'Surface Go 3', width: 1200, height: 1920, ppi: 220 },
+            { brand: 'Microsoft', name: 'Surface Pro 8', width: 1920, height: 2880, ppi: 267 },
+            { brand: 'Microsoft', name: 'Surface Pro X', width: 1920, height: 2880, ppi: 267 },
+            { brand: 'Microsoft', name: 'Surface Go 2', width: 1200, height: 1920, ppi: 220 },
+            
+            // Lenovo Tabs
+            { brand: 'Lenovo', name: 'Tab P12 Pro', width: 1600, height: 2560, ppi: 240 },
+            { brand: 'Lenovo', name: 'Tab P11 Plus', width: 1200, height: 2000, ppi: 243 },
+            { brand: 'Lenovo', name: 'Tab M10 Plus', width: 1200, height: 1920, ppi: 224 },
+            { brand: 'Lenovo', name: 'Tab P11', width: 1200, height: 2000, ppi: 243 },
+            { brand: 'Lenovo', name: 'Tab M8', width: 800, height: 1280, ppi: 189 }
+        ];
+
+        // Fun loading messages
+        const loadingMessages = [
+            "Summoning digital tablets from the cloud...",
+            "Teaching your PDF to swim in different screens...",
+            "Asking 25 tablets for their honest opinions...",
+            "Calibrating quantum PDF particles...",
+            "Negotiating with tablet overlords...",
+            "Converting pixels to tablet language...",
+            "Warming up the device orchestra...",
+            "Preparing your PDF for its world tour...",
+            "Enrolling your PDF in tablet academy...",
+            "Running compatibility magic spells..."
+        ];
+
+        // DOM Elements
+        const uploadScreen = document.getElementById('uploadScreen');
+        const loadingScreen = document.getElementById('loadingScreen');
+        const previewScreen = document.getElementById('previewScreen');
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const browseButton = document.querySelector('.browse-button');
+        const backButton = document.getElementById('backButton');
+        const mainPdfViewer = document.getElementById('mainPdfViewer');
+        const pdfName = document.getElementById('pdfName');
+        const deviceGrid = document.getElementById('deviceGrid');
+        const loadingMessage = document.getElementById('loadingMessage');
+
+        // State
+        let currentPdfUrl = null;
+        let pdfDimensions = { width: 0, height: 0 };
+
+        // Event Listeners
+        dropZone.addEventListener('click', () => fileInput.click());
+        browseButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            fileInput.click();
+        });
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            const file = e.dataTransfer.files[0];
+            handleFile(file);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) handleFile(file);
+        });
+
+        backButton.addEventListener('click', resetToUpload);
+
+        // File handling
+        function handleFile(file) {
+            if (!file || file.type !== 'application/pdf') {
+                alert('Please upload a valid PDF file.');
+                return;
+            }
+
+            // Show loading screen
+            showLoadingScreen();
+
+            // Create object URL
+            if (currentPdfUrl) {
+                URL.revokeObjectURL(currentPdfUrl);
+            }
+            currentPdfUrl = URL.createObjectURL(file);
+
+            // Set PDF name
+            pdfName.textContent = file.name;
+
+            // Simulate PDF dimension detection (in real app, you'd use PDF.js)
+            // For now, we'll use reasonable defaults
+            pdfDimensions = {
+                width: 612, // 8.5 inches at 72 DPI
+                height: 792 // 11 inches at 72 DPI
+            };
+
+            // Load PDF in main viewer with settings to hide toolbar and fit to page
+            mainPdfViewer.src = currentPdfUrl + '#toolbar=0&navpanes=0&scrollbar=0&view=FitH';
+
+            // Process after loading
+            setTimeout(() => {
+                showPreviewScreen();
+                analyzeCompatibility();
+            }, 2500);
+        }
+
+        // Loading screen management
+        function showLoadingScreen() {
+            uploadScreen.classList.remove('active');
+            loadingScreen.classList.add('active');
+            
+            // Set initial message
+            loadingMessage.textContent = loadingMessages[0];
+            
+            // Cycle through loading messages
+            let messageIndex = 0;
+            const messageInterval = setInterval(() => {
+                messageIndex = (messageIndex + 1) % loadingMessages.length;
+                loadingMessage.textContent = loadingMessages[messageIndex];
+            }, 400);
+            
+            // Store interval ID to clear later
+            loadingScreen.messageInterval = messageInterval;
+        }
+
+        function showPreviewScreen() {
+            // Clear loading message interval
+            if (loadingScreen.messageInterval) {
+                clearInterval(loadingScreen.messageInterval);
+            }
+            
+            loadingScreen.classList.remove('active');
+            previewScreen.classList.add('active');
+        }
+
+        // Analyze PDF compatibility with tablets
+        function analyzeCompatibility() {
+            deviceGrid.innerHTML = '';
+            let excellentCount = 0;
+            let goodCount = 0;
+            let issuesCount = 0;
+
+            tablets.forEach(tablet => {
+                const compatibility = calculateCompatibility(tablet);
+                const deviceCard = createDeviceCard(tablet, compatibility);
+                deviceGrid.appendChild(deviceCard);
+
+                // Update counts
+                if (compatibility.status === 'excellent') excellentCount++;
+                else if (compatibility.status === 'good') goodCount++;
+                else issuesCount++;
+            });
+
+            // Update summary
+            document.getElementById('excellentCount').textContent = excellentCount;
+            document.getElementById('goodCount').textContent = goodCount;
+            document.getElementById('issuesCount').textContent = issuesCount;
+        }
+
+        // Calculate compatibility based on viewport and PDF dimensions
+        function calculateCompatibility(tablet) {
+            const pdfAspectRatio = pdfDimensions.width / pdfDimensions.height;
+            const tabletAspectRatio = tablet.width / tablet.height;
+            
+            // Calculate how PDF fits in viewport
+            let scaleFactor;
+            if (pdfAspectRatio > tabletAspectRatio) {
+                // PDF is wider - scale based on width
+                scaleFactor = tablet.width / pdfDimensions.width;
+            } else {
+                // PDF is taller - scale based on height
+                scaleFactor = tablet.height / pdfDimensions.height;
+            }
+            
+            // Calculate effective text size (assuming 12pt base font)
+            const effectiveTextSize = 12 * scaleFactor;
+            
+            // Determine status based on various factors
+            let status, message;
+            
+            if (effectiveTextSize >= 10 && scaleFactor >= 0.8) {
+                status = 'excellent';
+                message = 'Perfect fit. Text remains highly readable.';
+            } else if (effectiveTextSize >= 8 && scaleFactor >= 0.6) {
+                status = 'good';
+                message = 'Good compatibility. Minor scrolling may be needed.';
+            } else {
+                status = 'issues';
+                const issues = [];
+                if (effectiveTextSize < 8) issues.push('Text may be too small');
+                if (scaleFactor < 0.6) issues.push('Significant zooming required');
+                if (tablet.width < 800) issues.push('Limited screen space');
+                message = issues.join('. ') + '.';
+            }
+            
+            return { status, message };
+        }
+
+        // Create device card element
+        function createDeviceCard(tablet, compatibility) {
+            const card = document.createElement('div');
+            card.className = 'device-card';
+            
+            const statusClass = compatibility.status === 'excellent' ? 'success' : 
+                               compatibility.status === 'good' ? 'warning' : 'error';
+            
+            const statusIcon = compatibility.status === 'excellent' ? '✓' : 
+                              compatibility.status === 'good' ? '!' : '✗';
+            
+            card.innerHTML = `
+                <div class="mini-tablet">
+                    <div class="mini-tablet-screen"></div>
+                </div>
+                <div class="device-name">${tablet.name}</div>
+                <div class="device-size">${tablet.width} × ${tablet.height}</div>
+                <div class="device-status">
+                    <span class="indicator indicator-${statusClass}"></span>
+                    <span>${compatibility.status.charAt(0).toUpperCase() + compatibility.status.slice(1)}</span>
+                </div>
+                <div class="tooltip">${compatibility.message}</div>
+            `;
+            
+            return card;
+        }
+
+        // Reset to upload screen
+        function resetToUpload() {
+            previewScreen.classList.remove('active');
+            uploadScreen.classList.add('active');
+            
+            // Clean up
+            if (currentPdfUrl) {
+                URL.revokeObjectURL(currentPdfUrl);
+                currentPdfUrl = null;
+            }
+            
+            // Reset file input
+            fileInput.value = '';
+            mainPdfViewer.src = '';
+        }
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', () => {
+            if (currentPdfUrl) {
+                URL.revokeObjectURL(currentPdfUrl);
+            }
+        });
+    </script>
+</body>
+</html>

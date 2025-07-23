@@ -1079,7 +1079,12 @@
 
                 <div class="upload-container max-w-xl mx-auto">
                     <div id="dropZone" class="drop-zone">
-                        <input type="file" id="fileInput" accept=".pdf" class="hidden">
+                        <input
+    type="file"
+    id="fileInput"
+    accept=".pdf"
+    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+>
                         <div class="upload-content">
                             <div class="upload-icon">
                                 <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1457,14 +1462,6 @@
             }
             
             if (dropZone) {
-                dropZone.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (fileInput) {
-                        fileInput.click();
-                    }
-                });
-                
                 dropZone.addEventListener('dragover', function(e) {
                     e.preventDefault();
                     dropZone.classList.add('drag-over');

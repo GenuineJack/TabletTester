@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tablet Tester - Test PDFs Across Devices</title>
+    <title>Tablet Tester Pro - Advanced PDF Testing Suite</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         /* Base Styles */
         * {
@@ -15,12 +16,64 @@
             background: #f8fafc;
             min-height: 100vh;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .main-content {
+            flex: 1;
+        }
+
+        /* Footer Styles */
+        .footer {
+            background: white;
+            border-top: 1px solid #e5e7eb;
+            padding: 24px 16px;
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        .footer-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .footer a {
+            color: #6366f1;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .pizza-button {
+            background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+            color: white !important;
+            padding: 8px 20px;
+            border-radius: 20px;
+            text-decoration: none !important;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .pizza-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+            text-decoration: none !important;
         }
 
         /* Screen Management */
         .screen {
             display: none;
-            min-height: 100vh;
+            min-height: calc(100vh - 120px);
         }
 
         .screen.active {
@@ -62,34 +115,26 @@
             }
         }
 
-        .upload-container {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
         .drop-zone {
             background: white;
             border: 3px dashed #e5e7eb;
             border-radius: 20px;
-            padding: 60px 40px;
-            text-align: center;
+            padding: 40px 20px;
             cursor: pointer;
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
         }
 
-        .drop-zone::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            pointer-events: none;
+        @media (min-width: 768px) {
+            .drop-zone {
+                padding: 60px 40px;
+            }
         }
 
         .drop-zone:hover {
@@ -103,13 +148,11 @@
             background: #f0f9ff;
         }
 
-        .drop-zone.drag-over::before {
-            opacity: 0.05;
-        }
-
         .upload-icon {
-            display: inline-block;
+            display: flex;
+            justify-content: center;
             animation: pulse 2s ease-in-out infinite;
+            margin-bottom: 24px;
         }
 
         @keyframes pulse {
@@ -144,18 +187,19 @@
         /* Loading Screen */
         #loadingScreen {
             background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-            display: none; /* Hidden by default */
+            display: none;
             align-items: center;
             justify-content: center;
         }
         
         #loadingScreen.active {
-            display: flex; /* Show as flex when active */
+            display: flex;
         }
 
         .loading-container {
             text-align: center;
             color: white;
+            padding: 20px;
         }
 
         .tablet-loader {
@@ -177,50 +221,15 @@
             }
         }
 
-        .tablet-screen-loader {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            right: 10px;
-            bottom: 10px;
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 12px;
-            overflow: hidden;
-        }
-
-        .tablet-screen-loader::after {
-            content: '';
-            position: absolute;
-            top: -100%;
-            left: 0;
-            right: 0;
-            height: 100%;
-            background: linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.4) 50%, transparent 100%);
-            animation: shimmer 1.5s ease-in-out infinite;
-        }
-
-        @keyframes shimmer {
-            0% {
-                top: -100%;
-            }
-            100% {
-                top: 100%;
-            }
-        }
-
         .loading-message {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: 600;
             margin-bottom: 20px;
-            animation: fadeText 3s ease-in-out infinite;
         }
 
-        @keyframes fadeText {
-            0%, 100% {
-                opacity: 0.8;
-            }
-            50% {
-                opacity: 1;
+        @media (min-width: 768px) {
+            .loading-message {
+                font-size: 1.5rem;
             }
         }
 
@@ -257,42 +266,32 @@
             }
         }
 
-        /* Preview Screen */
-        .back-button {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #6366f1;
-            font-weight: 600;
-            padding: 8px 16px;
-            border-radius: 8px;
-            transition: all 0.2s ease;
-            border: none;
-            background: white;
-            cursor: pointer;
-        }
-
-        .back-button:hover {
-            background: #f3f4f6;
-        }
-
-        /* Main Tablet Preview */
+        /* Main Preview Section */
         .main-preview-section {
             background: white;
             border-radius: 20px;
-            padding: 40px;
+            padding: 20px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        @media (min-width: 768px) {
+            .main-preview-section {
+                padding: 40px;
+            }
         }
 
         .main-tablet-container {
             display: flex;
             justify-content: center;
             align-items: center;
+            position: relative;
+            transition: min-height 0.3s ease;
+            padding: 20px 0;
         }
 
         .main-tablet-frame {
-            width: 600px;
-            height: 450px;
             background: #1a1a1a;
             border-radius: 36px;
             padding: 20px;
@@ -300,17 +299,8 @@
             box-shadow: 
                 0 20px 40px rgba(0, 0, 0, 0.3),
                 inset 0 2px 4px rgba(255, 255, 255, 0.1);
-        }
-
-        .tablet-notch {
-            position: absolute;
-            top: 8px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 120px;
-            height: 4px;
-            background: #2a2a2a;
-            border-radius: 2px;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            max-width: 100%;
         }
 
         .tablet-screen {
@@ -322,15 +312,16 @@
             position: relative;
         }
 
-        .tablet-home-indicator {
-            position: absolute;
-            bottom: 8px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80px;
-            height: 4px;
-            background: #3a3a3a;
-            border-radius: 2px;
+        .pdf-viewer-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+            cursor: grab;
+        }
+
+        .pdf-viewer-container.grabbing {
+            cursor: grabbing;
         }
 
         .pdf-viewer {
@@ -338,30 +329,443 @@
             height: 100%;
             border: none;
             background: white;
+            transform-origin: top left;
+            transition: transform 0.1s ease-out;
+        }
+
+        /* Preview Controls */
+        .preview-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+            flex-wrap: wrap;
+            max-width: 300px;
+        }
+
+        @media (min-width: 768px) {
+            .preview-controls {
+                top: 20px;
+                right: 20px;
+                gap: 10px;
+                max-width: none;
+            }
+        }
+
+        .control-button {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 6px 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            color: #374151;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        @media (min-width: 768px) {
+            .control-button {
+                padding: 8px 12px;
+                gap: 6px;
+                font-size: 14px;
+            }
+        }
+
+        .control-button:hover {
+            background: #f9fafb;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .control-button.active {
+            background: #6366f1;
+            color: white;
+            border-color: #6366f1;
+        }
+
+        /* Zoom Controls */
+        .zoom-controls {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            border-radius: 12px;
+            padding: 6px 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        @media (min-width: 768px) {
+            .zoom-controls {
+                bottom: 20px;
+                gap: 10px;
+                padding: 8px 16px;
+            }
+        }
+
+        .zoom-slider {
+            width: 100px;
+            height: 4px;
+            background: #e5e7eb;
+            border-radius: 2px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        @media (min-width: 768px) {
+            .zoom-slider {
+                width: 150px;
+            }
+        }
+
+        .zoom-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #6366f1;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .zoom-percentage {
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .zoom-percentage.warning {
+            color: #ef4444;
+        }
+
+        /* Screenshot Modal */
+        .screenshot-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .screenshot-modal.active {
+            display: flex;
+        }
+
+        .screenshot-content {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 90%;
+            max-height: 90%;
+            overflow: auto;
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .screenshot-container {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 16px;
+            width: 100%;
+        }
+
+        .screenshot-image {
+            max-width: 100%;
+            border-radius: 8px;
+            display: block;
+        }
+
+        .annotation-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            cursor: crosshair;
+            z-index: 10;
+        }
+
+        .annotation-canvas.drawing {
+            cursor: crosshair;
+        }
+
+        .screenshot-annotation {
+            position: absolute;
+            border: 2px solid #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+            pointer-events: all;
+            min-width: 30px;
+            min-height: 30px;
+        }
+
+        .screenshot-annotation.active {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .annotation-text-input {
+            position: absolute;
+            bottom: -35px;
+            left: 0;
+            background: white;
+            border: 2px solid #3b82f6;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 12px;
+            min-width: 150px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            z-index: 20;
+        }
+
+        .annotation-text {
+            position: absolute;
+            bottom: -30px;
+            left: 0;
+            background: #ffffff;
+            border: 1px solid #f59e0b;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 11px;
+            color: #92400e;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        .screenshot-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .annotation-tools {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            padding: 8px;
+            background: #f3f4f6;
+            border-radius: 8px;
+        }
+
+        .annotation-tools.hidden {
+            display: none;
+        }
+
+        .color-picker {
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            border: 2px solid #e5e7eb;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .color-picker input[type="color"] {
+            opacity: 0;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .color-preview {
+            width: 100%;
+            height: 100%;
+            border-radius: 4px;
+            pointer-events: none;
+        }
+
+        .annotation-tool-btn {
+            padding: 6px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+
+        .annotation-tool-btn:hover {
+            background: #f9fafb;
+            border-color: #d1d5db;
+        }
+
+        .annotation-tool-btn.active {
+            background: #6366f1;
+            color: white;
+            border-color: #6366f1;
+        }
+
+        .screenshot-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* Smart Recommendations */
+        .recommendations-panel {
+            background: #f0f9ff;
+            border: 1px solid #3b82f6;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .recommendation-item {
+            display: flex;
+            align-items: start;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .recommendation-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .recommendation-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 12px;
+            color: white;
+        }
+
+        .recommendation-icon.tip {
+            background: #3b82f6;
+        }
+
+        .recommendation-icon.warning {
+            background: #f59e0b;
+        }
+
+        .recommendation-icon.error {
+            background: #ef4444;
+        }
+
+        .recommendation-text {
+            font-size: 14px;
+            color: #374151;
+            line-height: 1.5;
+        }
+
+        /* Summary Section */
+        .summary-card {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        @media (min-width: 768px) {
+            .summary-card {
+                padding: 32px;
+            }
+        }
+
+        .summary-filters {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            cursor: pointer;
+        }
+
+        @media (min-width: 768px) {
+            .summary-filters {
+                display: flex;
+                justify-content: center;
+                gap: 24px;
+            }
+        }
+
+        .summary-item {
+            padding: 12px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        @media (min-width: 768px) {
+            .summary-item {
+                padding: 12px 24px;
+            }
+        }
+
+        .summary-item:hover {
+            background: #f3f4f6;
+            transform: translateY(-2px);
+        }
+
+        .summary-item.active {
+            background: #ede9fe;
+            border: 2px solid #6366f1;
         }
 
         /* Device Grid */
         .device-grid-section {
             background: white;
             border-radius: 20px;
-            padding: 40px;
+            padding: 20px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        @media (min-width: 768px) {
+            .device-grid-section {
+                padding: 40px;
+            }
         }
 
         .device-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 24px;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 16px;
+        }
+
+        @media (min-width: 768px) {
+            .device-grid {
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                gap: 24px;
+            }
         }
 
         .device-card {
             background: #f8fafc;
             border-radius: 12px;
-            padding: 20px;
+            padding: 16px;
             text-align: center;
             transition: all 0.3s ease;
             position: relative;
             cursor: pointer;
+        }
+
+        @media (min-width: 768px) {
+            .device-card {
+                padding: 20px;
+            }
         }
 
         .device-card:hover {
@@ -369,35 +773,98 @@
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
         }
 
+        .device-card.selected {
+            background: #ede9fe;
+            border: 2px solid #6366f1;
+        }
+
+        .device-card.filtered-out {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
         .mini-tablet {
-            width: 80px;
-            height: 100px;
+            width: 60px;
+            height: 75px;
             background: #2a2a2a;
-            border-radius: 12px;
+            border-radius: 8px;
             margin: 0 auto 12px;
             position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: transform 0.3s ease;
+        }
+
+        @media (min-width: 768px) {
+            .mini-tablet {
+                width: 80px;
+                height: 100px;
+                border-radius: 12px;
+            }
+        }
+
+        .mini-tablet.landscape {
+            width: 75px;
+            height: 60px;
+        }
+
+        @media (min-width: 768px) {
+            .mini-tablet.landscape {
+                width: 100px;
+                height: 80px;
+            }
         }
 
         .mini-tablet-screen {
             width: calc(100% - 8px);
             height: calc(100% - 8px);
             background: #e5e7eb;
-            border-radius: 8px;
+            border-radius: 4px;
+        }
+
+        @media (min-width: 768px) {
+            .mini-tablet-screen {
+                border-radius: 8px;
+            }
+        }
+
+        .rotate-button {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(99, 102, 241, 0.9);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .device-card:hover .rotate-button {
+            opacity: 1;
         }
 
         .device-name {
             font-weight: 600;
             color: #374151;
             margin-bottom: 4px;
+            font-size: 14px;
         }
 
-        .device-size {
-            font-size: 0.75rem;
+        .device-specs {
+            font-size: 0.7rem;
             color: #6b7280;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
+        }
+
+        @media (min-width: 768px) {
+            .device-specs {
+                font-size: 0.75rem;
+            }
         }
 
         .device-status {
@@ -409,12 +876,51 @@
             font-weight: 500;
         }
 
+        /* Performance Indicators */
+        .performance-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            margin-top: 8px;
+        }
+
+        @media (min-width: 768px) {
+            .performance-badge {
+                font-size: 0.75rem;
+            }
+        }
+
+        .performance-fast {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .performance-moderate {
+            background: #fed7aa;
+            color: #92400e;
+        }
+
+        .performance-slow {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
         /* Indicators */
         .indicator {
-            width: 20px;
-            height: 20px;
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
             display: inline-block;
+        }
+
+        @media (min-width: 768px) {
+            .indicator {
+                width: 20px;
+                height: 20px;
+            }
         }
 
         .indicator-success {
@@ -437,18 +943,18 @@
             transform: translateX(-50%);
             background: #1f2937;
             color: white;
-            padding: 8px 12px;
-            border-radius: 6px;
+            padding: 12px 16px;
+            border-radius: 8px;
             font-size: 0.75rem;
             white-space: nowrap;
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.2s ease;
             margin-bottom: 8px;
-            max-width: 200px;
+            max-width: 250px;
             white-space: normal;
             text-align: left;
-            z-index: 10;
+            z-index: 20;
         }
 
         .tooltip::after {
@@ -465,477 +971,1484 @@
             opacity: 1;
         }
 
-        /* Summary Section */
-        .summary-section {
-            margin-bottom: 40px;
+        /* Device Switcher */
+        .device-switcher {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 10;
         }
 
-        .summary-card {
+        @media (min-width: 768px) {
+            .device-switcher {
+                top: 20px;
+                left: 20px;
+            }
+        }
+
+        .device-dropdown {
+            padding: 6px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
             background: white;
-            border-radius: 20px;
-            padding: 32px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            text-align: center;
+            font-size: 12px;
+            color: #374151;
+            cursor: pointer;
+            min-width: 150px;
+        }
+
+        @media (min-width: 768px) {
+            .device-dropdown {
+                padding: 8px 16px;
+                font-size: 14px;
+                min-width: 200px;
+            }
+        }
+
+        /* Export Panel */
+        .export-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .export-options {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .export-button {
+            padding: 8px 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            color: #374151;
+            transition: all 0.2s ease;
+        }
+
+        .export-button:hover {
+            background: #f9fafb;
+            border-color: #6366f1;
+            color: #6366f1;
         }
 
         /* Responsive Design */
-        @media (max-width: 768px) {
-            .main-tablet-frame {
-                width: 100%;
-                max-width: 400px;
-                height: 300px;
+        @media (max-width: 767px) {
+            .text-5xl {
+                font-size: 2.25rem;
             }
-
-            .device-grid {
-                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-                gap: 16px;
+            
+            .text-2xl {
+                font-size: 1.5rem;
             }
-
-            .drop-zone {
-                padding: 40px 20px;
+            
+            .text-xl {
+                font-size: 1.125rem;
+            }
+            
+            .text-lg {
+                font-size: 1rem;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Screen 1: Upload Screen -->
-    <div id="uploadScreen" class="screen active">
-        <div class="container mx-auto px-4 py-12 max-w-4xl">
-            <header class="text-center mb-12">
-                <div class="flex justify-center mb-6">
-                    <div class="app-icon">
-                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor" stroke-width="2"/>
-                            <path d="M9 6H15M9 10H15M9 14H12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </div>
-                </div>
-                <h1 class="text-5xl font-bold text-gray-900 mb-4">Tablet Tester</h1>
-                <p class="text-xl text-gray-600 max-w-2xl mx-auto">
-                    See how your PDF looks across 25+ tablet devices. Test compatibility, readability, and layout in seconds.
-                </p>
-            </header>
-
-            <div class="upload-container">
-                <div id="dropZone" class="drop-zone">
-                    <input type="file" id="fileInput" accept=".pdf" class="hidden">
-                    <div class="upload-content">
-                        <div class="upload-icon mb-6">
-                            <svg width="72" height="72" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M12 15L12 3M12 3L16 7M12 3L8 7" stroke="url(#gradient)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                <path d="M2 17L2 19C2 20.1046 2.89543 21 4 21L20 21C21.1046 21 22 20.1046 22 19L22 17" stroke="url(#gradient)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                <defs>
-                                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                        <stop offset="0%" stop-color="#6366f1"/>
-                                        <stop offset="100%" stop-color="#a855f7"/>
-                                    </linearGradient>
-                                </defs>
+    <div class="main-content">
+        <!-- Screen 1: Upload Screen -->
+        <div id="uploadScreen" class="screen active">
+            <div class="container mx-auto px-4 py-8 md:py-12 max-w-4xl">
+                <header class="text-center mb-8 md:mb-12">
+                    <div class="flex justify-center mb-6">
+                        <div class="app-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor" stroke-width="2"/>
+                                <path d="M9 6H15M9 10H15M9 14H12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                             </svg>
                         </div>
-                        <h3 class="text-2xl font-semibold text-gray-800 mb-2">Drop your PDF here</h3>
-                        <p class="text-gray-600 mb-4">or click to browse your files</p>
-                        <button class="browse-button">
-                            Choose PDF
+                    </div>
+                    <h1 class="text-3xl md:text-5xl font-bold text-gray-900 mb-4">Tablet Tester Pro</h1>
+                    <p class="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
+                        Advanced PDF testing across 25+ tablet devices. Test compatibility, interactivity, and performance with professional tools.
+                    </p>
+                </header>
+
+                <div class="upload-container max-w-xl mx-auto">
+                    <div id="dropZone" class="drop-zone">
+                        <input type="file" id="fileInput" accept=".pdf" class="hidden">
+                        <div class="upload-content">
+                            <div class="upload-icon">
+                                <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 15L12 3M12 3L16 7M12 3L8 7" stroke="url(#gradient)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M2 17L2 19C2 20.1046 2.89543 21 4 21L20 21C21.1046 21 22 20.1046 22 19L22 17" stroke="url(#gradient)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <defs>
+                                        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#6366f1"/>
+                                            <stop offset="100%" stop-color="#a855f7"/>
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                            </div>
+                            <h3 class="text-xl md:text-2xl font-semibold text-gray-800 mb-2">Drop your PDF here</h3>
+                            <p class="text-gray-600 mb-4">or click to browse your files</p>
+                            <button class="browse-button" type="button" id="browseButton">
+                                Choose PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 md:mt-12 text-center">
+                    <p class="text-sm text-gray-500 mb-4">Tablet Tester Features</p>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 max-w-2xl mx-auto text-xs md:text-sm">
+                        <div class="flex items-center gap-2 justify-center">
+                            <svg class="w-4 h-4 md:w-5 md:h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                            <span>Orientation toggle</span>
+                        </div>
+                        <div class="flex items-center gap-2 justify-center">
+                            <svg class="w-4 h-4 md:w-5 md:h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                            <span>Zoom & pan controls</span>
+                        </div>
+                        <div class="flex items-center gap-2 justify-center">
+                            <svg class="w-4 h-4 md:w-5 md:h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                            <span>Screenshot annotations</span>
+                        </div>
+                        <div class="flex items-center gap-2 justify-center">
+                            <svg class="w-4 h-4 md:w-5 md:h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                            <span>Performance analysis</span>
+                        </div>
+                        <div class="flex items-center gap-2 justify-center">
+                            <svg class="w-4 h-4 md:w-5 md:h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                            <span>Device compatibility</span>
+                        </div>
+                        <div class="flex items-center gap-2 justify-center">
+                            <svg class="w-4 h-4 md:w-5 md:h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                            <span>Smart recommendations</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Interstitial -->
+        <div id="loadingScreen" class="screen">
+            <div class="loading-container">
+                <div class="loading-animation">
+                    <div class="tablet-loader">
+                        <div class="tablet-screen-loader"></div>
+                    </div>
+                </div>
+                <h2 id="loadingMessage" class="loading-message">Analyzing your PDF's DNA...</h2>
+                <div class="loading-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Screen 2: Preview Screen -->
+        <div id="previewScreen" class="screen">
+            <div class="container mx-auto px-4 py-6 md:py-8 max-w-7xl">
+                <!-- Header -->
+                <header class="flex items-center justify-between mb-6 md:mb-8">
+                    <button id="backButton" class="back-button flex items-center gap-2 px-3 py-2 md:px-4 md:py-2 text-indigo-600 hover:bg-gray-100 rounded-lg transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                        <span class="hidden sm:inline">New PDF</span>
+                    </button>
+                    <div class="text-center flex-1">
+                        <h2 class="text-xl md:text-2xl font-bold text-gray-900">PDF Testing Suite</h2>
+                        <p id="pdfName" class="text-xs md:text-sm text-gray-600 mt-1 truncate max-w-xs mx-auto"></p>
+                    </div>
+                    <div class="w-16 md:w-24"></div>
+                </header>
+
+                <!-- Main Preview -->
+                <div class="main-preview-section mb-8 md:mb-12" id="mainPreviewSection">
+                    <!-- Device Switcher -->
+                    <div class="device-switcher">
+                        <select id="deviceSelector" class="device-dropdown">
+                            <option value="0">iPad Pro 12.9"</option>
+                        </select>
+                    </div>
+
+                    <!-- Preview Controls -->
+                    <div class="preview-controls">
+                        <button id="rotateMainBtn" class="control-button">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M21 2v6h-6M3 12a9 9 0 0 1 15.364-6.364L21 8.5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span class="hidden sm:inline">Rotate</span>
+                        </button>
+                        <button id="screenshotBtn" class="control-button">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"/>
+                                <circle cx="12" cy="12" r="3" stroke-width="2"/>
+                            </svg>
+                            <span class="hidden sm:inline">Screenshot</span>
+                        </button>
+                    </div>
+
+                    <div class="main-tablet-container" id="mainTabletContainer">
+                        <div id="mainTablet" class="main-tablet-frame">
+                            <div class="tablet-screen">
+                                <div class="pdf-viewer-container" id="pdfContainer">
+                                    <iframe id="mainPdfViewer" class="pdf-viewer"></iframe>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Zoom Controls -->
+                    <div class="zoom-controls">
+                        <button id="zoomOut" class="control-button" style="padding: 4px 8px;">-</button>
+                        <input type="range" id="zoomSlider" class="zoom-slider" min="50" max="200" value="100">
+                        <span id="zoomPercentage" class="zoom-percentage">100%</span>
+                        <button id="zoomIn" class="control-button" style="padding: 4px 8px;">+</button>
+                        <button id="resetZoom" class="control-button" style="padding: 4px 8px;">Reset</button>
+                    </div>
+                </div>
+
+                <!-- Smart Recommendations -->
+                <div id="recommendationsPanel" class="recommendations-panel">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Smart Recommendations</h3>
+                    <div id="recommendationsList"></div>
+                </div>
+
+                <!-- Summary Stats -->
+                <div class="summary-section">
+                    <div class="summary-card">
+                        <h4 class="text-lg font-semibold text-gray-800 mb-4">Compatibility Summary</h4>
+                        <div class="summary-filters">
+                            <div class="summary-item" data-filter="all">
+                                <div class="text-2xl md:text-3xl font-bold text-gray-600">25</div>
+                                <div class="text-xs md:text-sm text-gray-600">All Devices</div>
+                            </div>
+                            <div class="summary-item" data-filter="excellent">
+                                <div id="excellentCount" class="text-2xl md:text-3xl font-bold text-green-600">0</div>
+                                <div class="text-xs md:text-sm text-gray-600">Excellent</div>
+                            </div>
+                            <div class="summary-item" data-filter="good">
+                                <div id="goodCount" class="text-2xl md:text-3xl font-bold text-yellow-600">0</div>
+                                <div class="text-xs md:text-sm text-gray-600">Good</div>
+                            </div>
+                            <div class="summary-item" data-filter="issues">
+                                <div id="issuesCount" class="text-2xl md:text-3xl font-bold text-red-600">0</div>
+                                <div class="text-xs md:text-sm text-gray-600">Has Issues</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Device Grid -->
+                <div class="device-grid-section">
+                    <div class="flex items-center justify-between mb-4 md:mb-6">
+                        <h3 class="text-lg md:text-xl font-semibold text-gray-800">Device Compatibility Check</h3>
+                        <div class="hidden sm:flex gap-4 text-sm">
+                            <div class="flex items-center gap-2">
+                                <span class="indicator indicator-success"></span>
+                                <span class="text-gray-600">Excellent</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="indicator indicator-warning"></span>
+                                <span class="text-gray-600">Good</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="indicator indicator-error"></span>
+                                <span class="text-gray-600">Issues</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="deviceGrid" class="device-grid">
+                        <!-- Devices will be dynamically inserted here -->
+                    </div>
+                </div>
+
+                <!-- Export Options -->
+                <div class="export-panel">
+                    <h4 class="text-lg font-semibold text-gray-800 mb-4">Export Options</h4>
+                    <div class="export-options">
+                        <button class="export-button" id="exportAllBtn">
+                            📱 Export All Device Screenshots
+                        </button>
+                        <button class="export-button" id="exportReportBtn">
+                            📊 Export Full Report (CSV)
                         </button>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <div class="mt-12 text-center">
-                <p class="text-sm text-gray-500 mb-4">Supports interactive PDFs with forms, links, and embedded media</p>
-                <div class="flex justify-center gap-8 text-sm text-gray-600">
-                    <div class="flex items-center gap-2">
-                        <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                        </svg>
-                        <span>Instant preview</span>
+        <!-- Screenshot Modal -->
+        <div id="screenshotModal" class="screenshot-modal">
+            <div class="screenshot-content">
+                <h3 class="text-xl font-semibold mb-4">Screenshot Preview</h3>
+                
+                <div class="screenshot-controls">
+                    <button id="annotateScreenshotBtn" class="export-button">
+                        ✏️ Annotate
+                    </button>
+                    <div id="annotationTools" class="annotation-tools hidden">
+                        <label class="text-sm text-gray-600">Color:</label>
+                        <div class="color-picker">
+                            <input type="color" id="annotationColor" value="#ef4444">
+                            <div class="color-preview" id="colorPreview" style="background: #ef4444;"></div>
+                        </div>
+                        <button id="clearAnnotationsBtn" class="annotation-tool-btn">Clear All</button>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                        </svg>
-                        <span>25+ devices</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                        </svg>
-                        <span>Smart analysis</span>
-                    </div>
+                </div>
+                
+                <div class="screenshot-container">
+                    <img id="screenshotImage" class="screenshot-image" alt="Screenshot">
+                    <canvas id="annotationCanvas" class="annotation-canvas" style="display: none;"></canvas>
+                    <div id="screenshotAnnotations"></div>
+                </div>
+                
+                <div class="screenshot-actions">
+                    <button class="export-button" id="downloadScreenshotBtn">Download</button>
+                    <button class="export-button" id="closeScreenshotBtn">Close</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Loading Interstitial -->
-    <div id="loadingScreen" class="screen">
-        <div class="loading-container">
-            <div class="loading-animation">
-                <div class="tablet-loader">
-                    <div class="tablet-screen-loader"></div>
-                </div>
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div>
+                Developed by the <a href="https://www.genuineorganization.com/" target="_blank">Genuine Organization</a> with 🧡
             </div>
-            <h2 id="loadingMessage" class="loading-message">Preparing your PDF for its tablet journey...</h2>
-            <div class="loading-dots">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
+            <a href="https://coff.ee/genuinejack" target="_blank" class="pizza-button">
+                🍕 Buy me some pizza
+            </a>
         </div>
-    </div>
-
-    <!-- Screen 2: Preview Screen -->
-    <div id="previewScreen" class="screen">
-        <div class="container mx-auto px-4 py-8 max-w-7xl">
-            <!-- Header with back button -->
-            <header class="flex items-center justify-between mb-8">
-                <button id="backButton" class="back-button">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                    </svg>
-                    <span>New PDF</span>
-                </button>
-                <div class="text-center">
-                    <h2 class="text-2xl font-bold text-gray-900">PDF Preview & Compatibility</h2>
-                    <p id="pdfName" class="text-sm text-gray-600 mt-1"></p>
-                </div>
-                <div class="w-24"></div> <!-- Spacer for centering -->
-            </header>
-
-            <!-- Main Preview -->
-            <div class="main-preview-section mb-12">
-                <h3 class="text-lg font-semibold text-gray-700 mb-4 text-center">Live Preview - iPad Pro 12.9"</h3>
-                <div class="main-tablet-container">
-                    <div class="main-tablet-frame">
-                        <div class="tablet-notch"></div>
-                        <div class="tablet-screen">
-                            <iframe id="mainPdfViewer" class="pdf-viewer"></iframe>
-                        </div>
-                        <div class="tablet-home-indicator"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Device Grid -->
-            <div class="device-grid-section">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-xl font-semibold text-gray-800">Device Compatibility Check</h3>
-                    <div class="flex gap-4 text-sm">
-                        <div class="flex items-center gap-2">
-                            <span class="indicator indicator-success"></span>
-                            <span class="text-gray-600">Excellent</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="indicator indicator-warning"></span>
-                            <span class="text-gray-600">Good</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="indicator indicator-error"></span>
-                            <span class="text-gray-600">Issues</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="deviceGrid" class="device-grid">
-                    <!-- Devices will be dynamically inserted here -->
-                </div>
-            </div>
-
-            <!-- Summary Stats -->
-            <div class="summary-section mt-12">
-                <div class="summary-card">
-                    <h4 class="text-lg font-semibold text-gray-800 mb-4">Compatibility Summary</h4>
-                    <div class="grid grid-cols-3 gap-4 text-center">
-                        <div>
-                            <div id="excellentCount" class="text-3xl font-bold text-green-600">0</div>
-                            <div class="text-sm text-gray-600">Excellent</div>
-                        </div>
-                        <div>
-                            <div id="goodCount" class="text-3xl font-bold text-yellow-600">0</div>
-                            <div class="text-sm text-gray-600">Good</div>
-                        </div>
-                        <div>
-                            <div id="issuesCount" class="text-3xl font-bold text-red-600">0</div>
-                            <div class="text-sm text-gray-600">Has Issues</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    </footer>
 
     <script>
-        // Tablet device data with viewport dimensions
+        // Tablet device data
         const tablets = [
             // Apple iPads
-            { brand: 'Apple', name: 'iPad Pro 12.9"', width: 1024, height: 1366, ppi: 264 },
-            { brand: 'Apple', name: 'iPad Pro 11"', width: 834, height: 1194, ppi: 264 },
-            { brand: 'Apple', name: 'iPad Air 10.9"', width: 820, height: 1180, ppi: 264 },
-            { brand: 'Apple', name: 'iPad 10.2"', width: 810, height: 1080, ppi: 264 },
-            { brand: 'Apple', name: 'iPad mini 8.3"', width: 744, height: 1133, ppi: 326 },
+            { brand: 'Apple', name: 'iPad Pro 12.9"', width: 1024, height: 1366, ppi: 264, performance: 'fast', scale: 0.8 },
+            { brand: 'Apple', name: 'iPad Pro 11"', width: 834, height: 1194, ppi: 264, performance: 'fast', scale: 0.65 },
+            { brand: 'Apple', name: 'iPad Air 10.9"', width: 820, height: 1180, ppi: 264, performance: 'fast', scale: 0.64 },
+            { brand: 'Apple', name: 'iPad 10.2"', width: 810, height: 1080, ppi: 264, performance: 'moderate', scale: 0.63 },
+            { brand: 'Apple', name: 'iPad mini 8.3"', width: 744, height: 1133, ppi: 326, performance: 'fast', scale: 0.58 },
             
             // Samsung Galaxy Tabs
-            { brand: 'Samsung', name: 'Galaxy Tab S9 Ultra', width: 1848, height: 2960, ppi: 266 },
-            { brand: 'Samsung', name: 'Galaxy Tab S9+', width: 1752, height: 2800, ppi: 266 },
-            { brand: 'Samsung', name: 'Galaxy Tab S9', width: 1600, height: 2560, ppi: 274 },
-            { brand: 'Samsung', name: 'Galaxy Tab A8', width: 800, height: 1280, ppi: 216 },
-            { brand: 'Samsung', name: 'Galaxy Tab S6 Lite', width: 800, height: 1280, ppi: 224 },
+            { brand: 'Samsung', name: 'Galaxy Tab S9 Ultra', width: 1848, height: 2960, ppi: 266, performance: 'fast', scale: 0.9 },
+            { brand: 'Samsung', name: 'Galaxy Tab S9+', width: 1752, height: 2800, ppi: 266, performance: 'fast', scale: 0.85 },
+            { brand: 'Samsung', name: 'Galaxy Tab S9', width: 1600, height: 2560, ppi: 274, performance: 'fast', scale: 0.8 },
+            { brand: 'Samsung', name: 'Galaxy Tab A8', width: 800, height: 1280, ppi: 216, performance: 'moderate', scale: 0.5 },
+            { brand: 'Samsung', name: 'Galaxy Tab S6 Lite', width: 800, height: 1280, ppi: 224, performance: 'moderate', scale: 0.5 },
             
             // Amazon Fire
-            { brand: 'Amazon', name: 'Fire HD 10 Plus', width: 1200, height: 1920, ppi: 224 },
-            { brand: 'Amazon', name: 'Fire HD 8 Plus', width: 800, height: 1280, ppi: 189 },
-            { brand: 'Amazon', name: 'Fire HD 10', width: 1200, height: 1920, ppi: 224 },
-            { brand: 'Amazon', name: 'Fire HD 8', width: 800, height: 1280, ppi: 189 },
-            { brand: 'Amazon', name: 'Fire 7', width: 600, height: 1024, ppi: 171 },
+            { brand: 'Amazon', name: 'Fire HD 10 Plus', width: 1200, height: 1920, ppi: 224, performance: 'moderate', scale: 0.7 },
+            { brand: 'Amazon', name: 'Fire HD 8 Plus', width: 800, height: 1280, ppi: 189, performance: 'moderate', scale: 0.5 },
+            { brand: 'Amazon', name: 'Fire HD 10', width: 1200, height: 1920, ppi: 224, performance: 'slow', scale: 0.7 },
+            { brand: 'Amazon', name: 'Fire HD 8', width: 800, height: 1280, ppi: 189, performance: 'slow', scale: 0.5 },
+            { brand: 'Amazon', name: 'Fire 7', width: 600, height: 1024, ppi: 171, performance: 'slow', scale: 0.4 },
             
             // Microsoft Surface
-            { brand: 'Microsoft', name: 'Surface Pro 9', width: 1920, height: 2880, ppi: 267 },
-            { brand: 'Microsoft', name: 'Surface Go 3', width: 1200, height: 1920, ppi: 220 },
-            { brand: 'Microsoft', name: 'Surface Pro 8', width: 1920, height: 2880, ppi: 267 },
-            { brand: 'Microsoft', name: 'Surface Pro X', width: 1920, height: 2880, ppi: 267 },
-            { brand: 'Microsoft', name: 'Surface Go 2', width: 1200, height: 1920, ppi: 220 },
+            { brand: 'Microsoft', name: 'Surface Pro 9', width: 1920, height: 2880, ppi: 267, performance: 'fast', scale: 0.85 },
+            { brand: 'Microsoft', name: 'Surface Go 3', width: 1200, height: 1920, ppi: 220, performance: 'moderate', scale: 0.7 },
+            { brand: 'Microsoft', name: 'Surface Pro 8', width: 1920, height: 2880, ppi: 267, performance: 'fast', scale: 0.85 },
+            { brand: 'Microsoft', name: 'Surface Pro X', width: 1920, height: 2880, ppi: 267, performance: 'fast', scale: 0.85 },
+            { brand: 'Microsoft', name: 'Surface Go 2', width: 1200, height: 1920, ppi: 220, performance: 'moderate', scale: 0.7 },
             
             // Lenovo Tabs
-            { brand: 'Lenovo', name: 'Tab P12 Pro', width: 1600, height: 2560, ppi: 240 },
-            { brand: 'Lenovo', name: 'Tab P11 Plus', width: 1200, height: 2000, ppi: 243 },
-            { brand: 'Lenovo', name: 'Tab M10 Plus', width: 1200, height: 1920, ppi: 224 },
-            { brand: 'Lenovo', name: 'Tab P11', width: 1200, height: 2000, ppi: 243 },
-            { brand: 'Lenovo', name: 'Tab M8', width: 800, height: 1280, ppi: 189 }
+            { brand: 'Lenovo', name: 'Tab P12 Pro', width: 1600, height: 2560, ppi: 240, performance: 'fast', scale: 0.8 },
+            { brand: 'Lenovo', name: 'Tab P11 Plus', width: 1200, height: 2000, ppi: 243, performance: 'moderate', scale: 0.7 },
+            { brand: 'Lenovo', name: 'Tab M10 Plus', width: 1200, height: 1920, ppi: 224, performance: 'moderate', scale: 0.7 },
+            { brand: 'Lenovo', name: 'Tab P11', width: 1200, height: 2000, ppi: 243, performance: 'moderate', scale: 0.7 },
+            { brand: 'Lenovo', name: 'Tab M8', width: 800, height: 1280, ppi: 189, performance: 'slow', scale: 0.5 }
         ];
 
-        // Fun loading messages
+        // Loading messages
         const loadingMessages = [
-            "Summoning digital tablets from the cloud...",
-            "Teaching your PDF to swim in different screens...",
-            "Asking 25 tablets for their honest opinions...",
-            "Calibrating quantum PDF particles...",
-            "Negotiating with tablet overlords...",
-            "Converting pixels to tablet language...",
-            "Warming up the device orchestra...",
-            "Preparing your PDF for its world tour...",
-            "Enrolling your PDF in tablet academy...",
-            "Running compatibility magic spells..."
+            "Analyzing your PDF's DNA...",
+            "Summoning 25 digital tablets...",
+            "Teaching your PDF tablet etiquette...",
+            "Measuring compatibility metrics...",
+            "Calculating performance scores...",
+            "Testing zoom capabilities...",
+            "Checking device specifications...",
+            "Optimizing for every pixel...",
+            "Running advanced diagnostics...",
+            "Preparing your comprehensive report..."
         ];
 
-        // DOM Elements
-        const uploadScreen = document.getElementById('uploadScreen');
-        const loadingScreen = document.getElementById('loadingScreen');
-        const previewScreen = document.getElementById('previewScreen');
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('fileInput');
-        const browseButton = document.querySelector('.browse-button');
-        const backButton = document.getElementById('backButton');
-        const mainPdfViewer = document.getElementById('mainPdfViewer');
-        const pdfName = document.getElementById('pdfName');
-        const deviceGrid = document.getElementById('deviceGrid');
-        const loadingMessage = document.getElementById('loadingMessage');
-
-        // State
+        // Global state
         let currentPdfUrl = null;
-        let pdfDimensions = { width: 0, height: 0 };
+        let pdfDimensions = { width: 612, height: 792 };
+        let currentDevice = tablets[0];
+        let currentDeviceIndex = 0;
+        let currentZoom = 100;
+        let panX = 0;
+        let panY = 0;
+        let isDragging = false;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let isPortrait = true;
+        let fileSize = 0;
+        let activeFilter = 'all';
+        let deviceCompatibilities = [];
+        
+        // Screenshot annotation state
+        let screenshotAnnotations = [];
+        let isAnnotatingScreenshot = false;
+        let currentAnnotationColor = '#ef4444';
+        let drawingAnnotation = false;
+        let annotationStartX = 0;
+        let annotationStartY = 0;
 
-        // Event Listeners
-        dropZone.addEventListener('click', () => fileInput.click());
-        browseButton.addEventListener('click', (e) => {
-            e.stopPropagation();
-            fileInput.click();
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Tablet Tester Pro initializing...');
+            
+            // Get all DOM elements
+            const fileInput = document.getElementById('fileInput');
+            const dropZone = document.getElementById('dropZone');
+            const browseButton = document.getElementById('browseButton');
+            const backButton = document.getElementById('backButton');
+            const rotateMainBtn = document.getElementById('rotateMainBtn');
+            const screenshotBtn = document.getElementById('screenshotBtn');
+            const exportAllBtn = document.getElementById('exportAllBtn');
+            const exportReportBtn = document.getElementById('exportReportBtn');
+            const deviceSelector = document.getElementById('deviceSelector');
+            const zoomSlider = document.getElementById('zoomSlider');
+            const zoomIn = document.getElementById('zoomIn');
+            const zoomOut = document.getElementById('zoomOut');
+            const resetZoom = document.getElementById('resetZoom');
+            const annotateScreenshotBtn = document.getElementById('annotateScreenshotBtn');
+            const clearAnnotationsBtn = document.getElementById('clearAnnotationsBtn');
+            const downloadScreenshotBtn = document.getElementById('downloadScreenshotBtn');
+            const closeScreenshotBtn = document.getElementById('closeScreenshotBtn');
+            const annotationColor = document.getElementById('annotationColor');
+            const colorPreview = document.getElementById('colorPreview');
+            
+            // File upload handlers
+            if (browseButton) {
+                browseButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (fileInput) {
+                        fileInput.click();
+                    }
+                });
+            }
+            
+            if (dropZone) {
+                dropZone.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (fileInput) {
+                        fileInput.click();
+                    }
+                });
+                
+                dropZone.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    dropZone.classList.add('drag-over');
+                });
+                
+                dropZone.addEventListener('dragleave', function() {
+                    dropZone.classList.remove('drag-over');
+                });
+                
+                dropZone.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.classList.remove('drag-over');
+                    
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        handleFile(files[0]);
+                    }
+                });
+            }
+            
+            if (fileInput) {
+                fileInput.addEventListener('change', function(e) {
+                    const files = e.target.files;
+                    if (files && files.length > 0) {
+                        handleFile(files[0]);
+                    }
+                });
+            }
+            
+            // Main controls
+            if (backButton) backButton.addEventListener('click', resetToUpload);
+            if (rotateMainBtn) rotateMainBtn.addEventListener('click', toggleMainOrientation);
+            if (screenshotBtn) screenshotBtn.addEventListener('click', captureScreenshot);
+            if (exportAllBtn) exportAllBtn.addEventListener('click', exportAllDevices);
+            if (exportReportBtn) exportReportBtn.addEventListener('click', exportReport);
+            
+            // Device selector
+            if (deviceSelector) {
+                deviceSelector.addEventListener('change', function(e) {
+                    currentDeviceIndex = parseInt(e.target.value);
+                    currentDevice = tablets[currentDeviceIndex];
+                    updateMainPreview();
+                    generateRecommendations();
+                });
+            }
+            
+            // Zoom controls
+            if (zoomSlider) zoomSlider.addEventListener('input', handleZoomChange);
+            if (zoomIn) zoomIn.addEventListener('click', () => {
+                zoomSlider.value = Math.min(200, currentZoom + 10);
+                handleZoomChange();
+            });
+            if (zoomOut) zoomOut.addEventListener('click', () => {
+                zoomSlider.value = Math.max(50, currentZoom - 10);
+                handleZoomChange();
+            });
+            if (resetZoom) resetZoom.addEventListener('click', () => {
+                zoomSlider.value = 100;
+                handleZoomChange();
+                panX = 0;
+                panY = 0;
+                updateTransform();
+            });
+            
+            // Pan controls
+            const pdfContainer = document.getElementById('pdfContainer');
+            if (pdfContainer) {
+                pdfContainer.addEventListener('mousedown', startPan);
+                pdfContainer.addEventListener('mousemove', doPan);
+                pdfContainer.addEventListener('mouseup', endPan);
+                pdfContainer.addEventListener('mouseleave', endPan);
+            }
+            
+            // Screenshot annotation controls
+            if (annotateScreenshotBtn) {
+                annotateScreenshotBtn.addEventListener('click', toggleScreenshotAnnotation);
+            }
+            if (clearAnnotationsBtn) {
+                clearAnnotationsBtn.addEventListener('click', clearAllAnnotations);
+            }
+            if (downloadScreenshotBtn) {
+                downloadScreenshotBtn.addEventListener('click', downloadAnnotatedScreenshot);
+            }
+            if (closeScreenshotBtn) {
+                closeScreenshotBtn.addEventListener('click', closeScreenshotModal);
+            }
+            if (annotationColor) {
+                annotationColor.addEventListener('change', function(e) {
+                    currentAnnotationColor = e.target.value;
+                    if (colorPreview) colorPreview.style.background = currentAnnotationColor;
+                });
+            }
+            
+            // Summary filters
+            document.querySelectorAll('.summary-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    const filter = e.currentTarget.dataset.filter;
+                    setActiveFilter(filter);
+                });
+            });
+            
+            // Initialize device selector
+            initializeDeviceSelector();
         });
-
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('drag-over');
-        });
-
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('drag-over');
-        });
-
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('drag-over');
-            const file = e.dataTransfer.files[0];
-            handleFile(file);
-        });
-
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) handleFile(file);
-        });
-
-        backButton.addEventListener('click', resetToUpload);
 
         // File handling
         function handleFile(file) {
-            if (!file || file.type !== 'application/pdf') {
+            if (!file) return;
+            
+            // Check if it's a PDF
+            const isPDF = file.type === 'application/pdf' || 
+                         file.type === 'application/x-pdf' || 
+                         file.name.toLowerCase().endsWith('.pdf');
+            
+            if (!isPDF) {
                 alert('Please upload a valid PDF file.');
                 return;
             }
 
-            // Show loading screen
+            fileSize = file.size;
             showLoadingScreen();
 
-            // Create object URL
             if (currentPdfUrl) {
                 URL.revokeObjectURL(currentPdfUrl);
             }
-            currentPdfUrl = URL.createObjectURL(file);
+            
+            try {
+                currentPdfUrl = URL.createObjectURL(file);
+                document.getElementById('pdfName').textContent = file.name;
 
-            // Set PDF name
-            pdfName.textContent = file.name;
+                const mainPdfViewer = document.getElementById('mainPdfViewer');
+                mainPdfViewer.src = currentPdfUrl + '#toolbar=0&navpanes=0&scrollbar=0&view=FitH';
 
-            // Simulate PDF dimension detection (in real app, you'd use PDF.js)
-            // For now, we'll use reasonable defaults
-            pdfDimensions = {
-                width: 612, // 8.5 inches at 72 DPI
-                height: 792 // 11 inches at 72 DPI
-            };
-
-            // Load PDF in main viewer with settings to hide toolbar and fit to page
-            mainPdfViewer.src = currentPdfUrl + '#toolbar=0&navpanes=0&scrollbar=0&view=FitH';
-
-            // Process after loading
-            setTimeout(() => {
-                showPreviewScreen();
-                analyzeCompatibility();
-            }, 2500);
+                setTimeout(() => {
+                    showPreviewScreen();
+                    analyzeCompatibility();
+                    generateRecommendations();
+                }, 3000);
+            } catch (error) {
+                console.error('Error loading PDF:', error);
+                alert('Error loading PDF. Please try again.');
+                resetToUpload();
+            }
         }
 
         // Loading screen management
         function showLoadingScreen() {
-            uploadScreen.classList.remove('active');
-            loadingScreen.classList.add('active');
+            document.getElementById('uploadScreen').classList.remove('active');
+            document.getElementById('loadingScreen').classList.add('active');
             
-            // Set initial message
+            let messageIndex = 0;
+            const loadingMessage = document.getElementById('loadingMessage');
             loadingMessage.textContent = loadingMessages[0];
             
-            // Cycle through loading messages
-            let messageIndex = 0;
             const messageInterval = setInterval(() => {
                 messageIndex = (messageIndex + 1) % loadingMessages.length;
                 loadingMessage.textContent = loadingMessages[messageIndex];
             }, 400);
             
-            // Store interval ID to clear later
-            loadingScreen.messageInterval = messageInterval;
+            document.getElementById('loadingScreen').messageInterval = messageInterval;
         }
 
         function showPreviewScreen() {
-            // Clear loading message interval
+            const loadingScreen = document.getElementById('loadingScreen');
             if (loadingScreen.messageInterval) {
                 clearInterval(loadingScreen.messageInterval);
             }
             
             loadingScreen.classList.remove('active');
-            previewScreen.classList.add('active');
+            document.getElementById('previewScreen').classList.add('active');
+            updateMainPreview();
         }
 
-        // Analyze PDF compatibility with tablets
+        // Toggle main tablet orientation
+        function toggleMainOrientation() {
+            isPortrait = !isPortrait;
+            updateMainPreview();
+        }
+
+        // Update main preview
+        function updateMainPreview() {
+            const device = currentDevice;
+            const scale = device.scale || 0.8;
+            const isMobile = window.innerWidth < 768;
+            const mobileScale = 0.6;
+            
+            let width, height;
+            if (isPortrait) {
+                width = device.width * scale * (isMobile ? mobileScale : 1);
+                height = device.height * scale * (isMobile ? mobileScale : 1);
+            } else {
+                width = device.height * scale * (isMobile ? mobileScale : 1);
+                height = device.width * scale * (isMobile ? mobileScale : 1);
+            }
+            
+            const maxWidth = isMobile ? window.innerWidth - 40 : 700;
+            const maxHeight = isMobile ? 400 : 500;
+            
+            if (width > maxWidth || height > maxHeight) {
+                const scaleDown = Math.min(maxWidth / width, maxHeight / height);
+                width *= scaleDown;
+                height *= scaleDown;
+            }
+            
+            const mainTablet = document.getElementById('mainTablet');
+            mainTablet.style.width = width + 'px';
+            mainTablet.style.height = height + 'px';
+            
+            const mainTabletContainer = document.getElementById('mainTabletContainer');
+            const containerHeight = height + 100;
+            mainTabletContainer.style.minHeight = containerHeight + 'px';
+        }
+
+        // Initialize device selector
+        function initializeDeviceSelector() {
+            const deviceSelector = document.getElementById('deviceSelector');
+            if (!deviceSelector) return;
+            
+            deviceSelector.innerHTML = '';
+            tablets.forEach((tablet, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `${tablet.brand} ${tablet.name}`;
+                deviceSelector.appendChild(option);
+            });
+        }
+
+        // Pan handling
+        function startPan(e) {
+            isDragging = true;
+            dragStartX = e.clientX - panX;
+            dragStartY = e.clientY - panY;
+            e.currentTarget.classList.add('grabbing');
+        }
+
+        function doPan(e) {
+            if (!isDragging) return;
+            e.preventDefault();
+            panX = e.clientX - dragStartX;
+            panY = e.clientY - dragStartY;
+            updateTransform();
+        }
+
+        function endPan(e) {
+            isDragging = false;
+            e.currentTarget.classList.remove('grabbing');
+        }
+
+        // Zoom handling
+        function handleZoomChange() {
+            currentZoom = parseInt(document.getElementById('zoomSlider').value);
+            const zoomPercentage = document.getElementById('zoomPercentage');
+            zoomPercentage.textContent = currentZoom + '%';
+            
+            if (currentZoom > 150) {
+                zoomPercentage.classList.add('warning');
+            } else {
+                zoomPercentage.classList.remove('warning');
+            }
+            
+            updateTransform();
+        }
+
+        // Update transform
+        function updateTransform() {
+            const mainPdfViewer = document.getElementById('mainPdfViewer');
+            mainPdfViewer.style.transform = `scale(${currentZoom / 100}) translate(${panX}px, ${panY}px)`;
+        }
+
+        // Capture screenshot
+        function captureScreenshot() {
+            const mainTablet = document.getElementById('mainTablet');
+            const iframe = document.getElementById('mainPdfViewer');
+            
+            // First try to capture the iframe content directly
+            try {
+                // Create a canvas to combine tablet frame and PDF content
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Set canvas size based on the tablet frame
+                const tabletRect = mainTablet.getBoundingClientRect();
+                canvas.width = tabletRect.width * 2; // Higher resolution
+                canvas.height = tabletRect.height * 2;
+                ctx.scale(2, 2);
+                
+                // Draw tablet frame background
+                ctx.fillStyle = '#1a1a1a';
+                ctx.fillRect(0, 0, tabletRect.width, tabletRect.height);
+                
+                // Draw inner screen area
+                const padding = 20;
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(padding, padding, tabletRect.width - padding * 2, tabletRect.height - padding * 2);
+                
+                // Add a PDF placeholder since we can't capture iframe content directly
+                ctx.fillStyle = '#f3f4f6';
+                ctx.fillRect(padding + 10, padding + 10, tabletRect.width - padding * 2 - 20, tabletRect.height - padding * 2 - 20);
+                
+                // Add PDF icon and text
+                ctx.fillStyle = '#6b7280';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('PDF Content', tabletRect.width / 2, tabletRect.height / 2 - 10);
+                ctx.fillText(`${currentDevice.name}`, tabletRect.width / 2, tabletRect.height / 2 + 10);
+                ctx.fillText(`${currentZoom}% zoom`, tabletRect.width / 2, tabletRect.height / 2 + 30);
+                
+                // Convert to image
+                const imgData = canvas.toDataURL('image/png');
+                document.getElementById('screenshotImage').src = imgData;
+                document.getElementById('screenshotModal').classList.add('active');
+                
+                // Reset annotation state
+                screenshotAnnotations = [];
+                isAnnotatingScreenshot = false;
+                document.getElementById('annotateScreenshotBtn').textContent = '✏️ Annotate';
+                document.getElementById('annotationTools').classList.add('hidden');
+                document.getElementById('annotationCanvas').style.display = 'none';
+                document.getElementById('screenshotAnnotations').innerHTML = '';
+                
+            } catch (error) {
+                console.error('Screenshot capture error:', error);
+                
+                // Fallback: Use html2canvas on the tablet frame only
+                html2canvas(mainTablet, {
+                    backgroundColor: null,
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    logging: false
+                }).then(canvas => {
+                    const imgData = canvas.toDataURL('image/png');
+                    document.getElementById('screenshotImage').src = imgData;
+                    document.getElementById('screenshotModal').classList.add('active');
+                    
+                    // Reset annotation state
+                    screenshotAnnotations = [];
+                    isAnnotatingScreenshot = false;
+                    document.getElementById('annotateScreenshotBtn').textContent = '✏️ Annotate';
+                    document.getElementById('annotationTools').classList.add('hidden');
+                    document.getElementById('annotationCanvas').style.display = 'none';
+                    document.getElementById('screenshotAnnotations').innerHTML = '';
+                }).catch(fallbackError => {
+                    console.error('Fallback screenshot failed:', fallbackError);
+                    alert('Screenshot capture failed. This may be due to browser security restrictions with PDF content.');
+                });
+            }
+        }
+
+        // Toggle screenshot annotation
+        function toggleScreenshotAnnotation() {
+            isAnnotatingScreenshot = !isAnnotatingScreenshot;
+            
+            if (isAnnotatingScreenshot) {
+                document.getElementById('annotateScreenshotBtn').textContent = '✓ Done Annotating';
+                document.getElementById('annotationTools').classList.remove('hidden');
+                setupAnnotationCanvas();
+            } else {
+                document.getElementById('annotateScreenshotBtn').textContent = '✏️ Annotate';
+                document.getElementById('annotationTools').classList.add('hidden');
+                document.getElementById('annotationCanvas').style.display = 'none';
+            }
+        }
+
+        // Setup annotation canvas
+        function setupAnnotationCanvas() {
+            const img = document.getElementById('screenshotImage');
+            const canvas = document.getElementById('annotationCanvas');
+            const container = img.parentElement;
+            
+            canvas.width = img.width;
+            canvas.height = img.height;
+            canvas.style.display = 'block';
+            
+            canvas.addEventListener('mousedown', startDrawingAnnotation);
+            canvas.addEventListener('mousemove', drawAnnotation);
+            canvas.addEventListener('mouseup', finishDrawingAnnotation);
+        }
+
+        // Annotation drawing functions
+        function startDrawingAnnotation(e) {
+            if (!isAnnotatingScreenshot) return;
+            
+            drawingAnnotation = true;
+            const rect = e.target.getBoundingClientRect();
+            annotationStartX = e.clientX - rect.left;
+            annotationStartY = e.clientY - rect.top;
+        }
+
+        function drawAnnotation(e) {
+            if (!drawingAnnotation) return;
+            
+            const canvas = document.getElementById('annotationCanvas');
+            const rect = canvas.getBoundingClientRect();
+            const currentX = e.clientX - rect.left;
+            const currentY = e.clientY - rect.top;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.strokeStyle = currentAnnotationColor;
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.strokeRect(
+                annotationStartX,
+                annotationStartY,
+                currentX - annotationStartX,
+                currentY - annotationStartY
+            );
+        }
+
+        function finishDrawingAnnotation(e) {
+            if (!drawingAnnotation) return;
+            
+            drawingAnnotation = false;
+            const canvas = document.getElementById('annotationCanvas');
+            const rect = canvas.getBoundingClientRect();
+            const endX = e.clientX - rect.left;
+            const endY = e.clientY - rect.top;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const x = Math.min(annotationStartX, endX);
+            const y = Math.min(annotationStartY, endY);
+            const width = Math.abs(endX - annotationStartX);
+            const height = Math.abs(endY - annotationStartY);
+            
+            if (width > 20 && height > 20) {
+                createScreenshotAnnotation(x, y, width, height);
+            }
+        }
+
+        // Create screenshot annotation
+        function createScreenshotAnnotation(x, y, width, height) {
+            const annotationsContainer = document.getElementById('screenshotAnnotations');
+            
+            const annotation = document.createElement('div');
+            annotation.className = 'screenshot-annotation';
+            annotation.style.left = x + 'px';
+            annotation.style.top = y + 'px';
+            annotation.style.width = width + 'px';
+            annotation.style.height = height + 'px';
+            annotation.style.borderColor = currentAnnotationColor;
+            annotation.style.backgroundColor = currentAnnotationColor + '20'; // Semi-transparent
+            
+            const textInput = document.createElement('input');
+            textInput.className = 'annotation-text-input';
+            textInput.placeholder = 'Add note...';
+            textInput.style.borderColor = currentAnnotationColor;
+            
+            annotation.appendChild(textInput);
+            annotationsContainer.appendChild(annotation);
+            
+            textInput.focus();
+            
+            textInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    const text = textInput.value.trim();
+                    if (text) {
+                        textInput.remove();
+                        const textDisplay = document.createElement('div');
+                        textDisplay.className = 'annotation-text';
+                        textDisplay.textContent = text;
+                        textDisplay.style.backgroundColor = '#ffffff';
+                        textDisplay.style.borderColor = currentAnnotationColor;
+                        textDisplay.style.color = currentAnnotationColor;
+                        textDisplay.style.border = `1px solid ${currentAnnotationColor}`;
+                        annotation.appendChild(textDisplay);
+                        
+                        // Store annotation data for export
+                        screenshotAnnotations.push({
+                            x, y, width, height,
+                            text: text,
+                            color: currentAnnotationColor,
+                            element: annotation
+                        });
+                    } else {
+                        annotation.remove();
+                    }
+                }
+            });
+            
+            textInput.addEventListener('blur', () => {
+                const text = textInput.value.trim();
+                if (text) {
+                    textInput.remove();
+                    const textDisplay = document.createElement('div');
+                    textDisplay.className = 'annotation-text';
+                    textDisplay.textContent = text;
+                    textDisplay.style.backgroundColor = '#ffffff';
+                    textDisplay.style.borderColor = currentAnnotationColor;
+                    textDisplay.style.color = currentAnnotationColor;
+                    textDisplay.style.border = `1px solid ${currentAnnotationColor}`;
+                    annotation.appendChild(textDisplay);
+                    
+                    // Store annotation data for export
+                    screenshotAnnotations.push({
+                        x, y, width, height,
+                        text: text,
+                        color: currentAnnotationColor,
+                        element: annotation
+                    });
+                } else {
+                    annotation.remove();
+                }
+            });
+            
+            // Make annotation moveable
+            let isMoving = false;
+            let moveStartX = 0;
+            let moveStartY = 0;
+            
+            annotation.addEventListener('mousedown', (e) => {
+                if (e.target === textInput) return;
+                isMoving = true;
+                moveStartX = e.clientX - annotation.offsetLeft;
+                moveStartY = e.clientY - annotation.offsetTop;
+                annotation.classList.add('active');
+                e.preventDefault();
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (!isMoving) return;
+                const newLeft = e.clientX - moveStartX;
+                const newTop = e.clientY - moveStartY;
+                annotation.style.left = Math.max(0, newLeft) + 'px';
+                annotation.style.top = Math.max(0, newTop) + 'px';
+                e.preventDefault();
+            });
+            
+            document.addEventListener('mouseup', () => {
+                if (isMoving) {
+                    isMoving = false;
+                    annotation.classList.remove('active');
+                    
+                    // Update stored annotation position
+                    const annotationData = screenshotAnnotations.find(a => a.element === annotation);
+                    if (annotationData) {
+                        annotationData.x = parseInt(annotation.style.left);
+                        annotationData.y = parseInt(annotation.style.top);
+                    }
+                }
+            });
+        }
+
+        // Clear all annotations
+        function clearAllAnnotations() {
+            document.getElementById('screenshotAnnotations').innerHTML = '';
+            screenshotAnnotations = [];
+            
+            // Also clear the annotation canvas if it exists
+            const canvas = document.getElementById('annotationCanvas');
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+
+        // Download annotated screenshot
+        function downloadAnnotatedScreenshot() {
+            const img = document.getElementById('screenshotImage');
+            
+            // Create a new image element to ensure it's fully loaded
+            const tempImg = new Image();
+            tempImg.onload = function() {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                canvas.width = tempImg.naturalWidth || tempImg.width;
+                canvas.height = tempImg.naturalHeight || tempImg.height;
+                
+                // Draw the original screenshot
+                ctx.drawImage(tempImg, 0, 0);
+                
+                // Calculate scale factor between displayed image and natural size
+                const scaleX = canvas.width / img.clientWidth;
+                const scaleY = canvas.height / img.clientHeight;
+                
+                // Draw annotations
+                document.querySelectorAll('.screenshot-annotation').forEach(annotation => {
+                    const rect = annotation.getBoundingClientRect();
+                    const imgRect = img.getBoundingClientRect();
+                    
+                    // Calculate relative position
+                    const x = (rect.left - imgRect.left) * scaleX;
+                    const y = (rect.top - imgRect.top) * scaleY;
+                    const width = rect.width * scaleX;
+                    const height = rect.height * scaleY;
+                    
+                    // Get annotation color
+                    const borderColor = annotation.style.borderColor || currentAnnotationColor;
+                    
+                    // Draw annotation outline (not filled)
+                    ctx.strokeStyle = borderColor;
+                    ctx.lineWidth = 3;
+                    ctx.setLineDash([]);
+                    ctx.strokeRect(x, y, width, height);
+                    
+                    // Draw semi-transparent background
+                    ctx.fillStyle = borderColor + '20'; // Add transparency
+                    ctx.fillRect(x, y, width, height);
+                    
+                    // Draw annotation text if it exists
+                    const textEl = annotation.querySelector('.annotation-text');
+                    if (textEl && textEl.textContent.trim()) {
+                        const text = textEl.textContent.trim();
+                        const fontSize = Math.max(12, 16 * Math.min(scaleX, scaleY));
+                        
+                        ctx.fillStyle = borderColor;
+                        ctx.font = `${fontSize}px Arial, sans-serif`;
+                        ctx.textAlign = 'left';
+                        ctx.textBaseline = 'top';
+                        
+                        // Draw text background
+                        const textMetrics = ctx.measureText(text);
+                        const textWidth = textMetrics.width;
+                        const textHeight = fontSize * 1.2;
+                        const textX = x + 5;
+                        const textY = y + height + 5;
+                        
+                        // Background for text
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(textX - 3, textY - 3, textWidth + 6, textHeight + 6);
+                        
+                        // Text border
+                        ctx.strokeStyle = borderColor;
+                        ctx.lineWidth = 1;
+                        ctx.strokeRect(textX - 3, textY - 3, textWidth + 6, textHeight + 6);
+                        
+                        // Text itself
+                        ctx.fillStyle = borderColor;
+                        ctx.fillText(text, textX, textY);
+                    }
+                });
+                
+                // Download the annotated image
+                canvas.toBlob(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.download = `annotated-${currentDevice.name.replace(/[^a-z0-9]/gi, '-')}-${Date.now()}.png`;
+                    link.href = url;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                }, 'image/png');
+            };
+            
+            tempImg.onerror = function() {
+                alert('Error loading screenshot for annotation. Please try capturing a new screenshot.');
+            };
+            
+            tempImg.src = img.src;
+        }
+
+        function closeScreenshotModal() {
+            document.getElementById('screenshotModal').classList.remove('active');
+            clearAllAnnotations();
+        }
+
+        // Analyze compatibility
         function analyzeCompatibility() {
+            const deviceGrid = document.getElementById('deviceGrid');
             deviceGrid.innerHTML = '';
+            deviceCompatibilities = [];
             let excellentCount = 0;
             let goodCount = 0;
             let issuesCount = 0;
 
-            tablets.forEach(tablet => {
-                const compatibility = calculateCompatibility(tablet);
-                const deviceCard = createDeviceCard(tablet, compatibility);
+            tablets.forEach((tablet, index) => {
+                const compatibility = calculateEnhancedCompatibility(tablet);
+                deviceCompatibilities[index] = compatibility;
+                const deviceCard = createEnhancedDeviceCard(tablet, compatibility, index);
                 deviceGrid.appendChild(deviceCard);
 
-                // Update counts
                 if (compatibility.status === 'excellent') excellentCount++;
                 else if (compatibility.status === 'good') goodCount++;
                 else issuesCount++;
             });
 
-            // Update summary
             document.getElementById('excellentCount').textContent = excellentCount;
             document.getElementById('goodCount').textContent = goodCount;
             document.getElementById('issuesCount').textContent = issuesCount;
         }
 
-        // Calculate compatibility based on viewport and PDF dimensions
-        function calculateCompatibility(tablet) {
+        // Calculate compatibility
+        function calculateEnhancedCompatibility(tablet) {
             const pdfAspectRatio = pdfDimensions.width / pdfDimensions.height;
             const tabletAspectRatio = tablet.width / tablet.height;
             
-            // Calculate how PDF fits in viewport
             let scaleFactor;
             if (pdfAspectRatio > tabletAspectRatio) {
-                // PDF is wider - scale based on width
                 scaleFactor = tablet.width / pdfDimensions.width;
             } else {
-                // PDF is taller - scale based on height
                 scaleFactor = tablet.height / pdfDimensions.height;
             }
             
-            // Calculate effective text size (assuming 12pt base font)
             const effectiveTextSize = 12 * scaleFactor;
             
-            // Determine status based on various factors
-            let status, message;
+            let performanceScore = 10;
+            if (tablet.performance === 'moderate') performanceScore = 7;
+            if (tablet.performance === 'slow') performanceScore = 5;
             
-            if (effectiveTextSize >= 10 && scaleFactor >= 0.8) {
+            const fileSizeMB = fileSize / (1024 * 1024);
+            if (fileSizeMB > 10) performanceScore -= 2;
+            if (fileSizeMB > 20) performanceScore -= 3;
+            
+            let status, message;
+            const issues = [];
+            
+            if (effectiveTextSize >= 10 && scaleFactor >= 0.8 && performanceScore >= 7) {
                 status = 'excellent';
-                message = 'Perfect fit. Text remains highly readable.';
-            } else if (effectiveTextSize >= 8 && scaleFactor >= 0.6) {
+                message = 'Perfect fit. Excellent performance expected.';
+            } else if (effectiveTextSize >= 8 && scaleFactor >= 0.6 && performanceScore >= 5) {
                 status = 'good';
-                message = 'Good compatibility. Minor scrolling may be needed.';
+                message = 'Good compatibility. Minor adjustments may help.';
             } else {
                 status = 'issues';
-                const issues = [];
                 if (effectiveTextSize < 8) issues.push('Text may be too small');
                 if (scaleFactor < 0.6) issues.push('Significant zooming required');
+                if (performanceScore < 5) issues.push('Performance issues likely');
                 if (tablet.width < 800) issues.push('Limited screen space');
                 message = issues.join('. ') + '.';
             }
             
-            return { status, message };
+            return { 
+                status, 
+                message, 
+                performanceScore,
+                scaleFactor,
+                effectiveTextSize
+            };
         }
 
-        // Create device card element
-        function createDeviceCard(tablet, compatibility) {
+        // Create device card
+        function createEnhancedDeviceCard(tablet, compatibility, index) {
             const card = document.createElement('div');
             card.className = 'device-card';
+            if (index === currentDeviceIndex) card.classList.add('selected');
             
             const statusClass = compatibility.status === 'excellent' ? 'success' : 
                                compatibility.status === 'good' ? 'warning' : 'error';
             
-            const statusIcon = compatibility.status === 'excellent' ? '✓' : 
-                              compatibility.status === 'good' ? '!' : '✗';
+            const perfClass = compatibility.performanceScore >= 8 ? 'fast' :
+                             compatibility.performanceScore >= 5 ? 'moderate' : 'slow';
             
             card.innerHTML = `
-                <div class="mini-tablet">
+                <div class="mini-tablet" id="mini-tablet-${index}">
                     <div class="mini-tablet-screen"></div>
                 </div>
+                <button class="rotate-button" onclick="rotateDevice(${index})">↻</button>
                 <div class="device-name">${tablet.name}</div>
-                <div class="device-size">${tablet.width} × ${tablet.height}</div>
+                <div class="device-specs">${tablet.width} × ${tablet.height} • ${tablet.ppi}ppi</div>
                 <div class="device-status">
                     <span class="indicator indicator-${statusClass}"></span>
                     <span>${compatibility.status.charAt(0).toUpperCase() + compatibility.status.slice(1)}</span>
                 </div>
-                <div class="tooltip">${compatibility.message}</div>
+                <div class="performance-badge performance-${perfClass}">
+                    ${perfClass === 'fast' ? '⚡' : perfClass === 'moderate' ? '🔋' : '🐌'} 
+                    ${perfClass.charAt(0).toUpperCase() + perfClass.slice(1)}
+                </div>
+                <div class="tooltip">
+                    ${compatibility.message}
+                    <br><br>Performance score: ${compatibility.performanceScore}/10
+                    <br>Text scaling: ${Math.round(compatibility.effectiveTextSize)}pt
+                </div>
             `;
+            
+            card.addEventListener('click', () => selectDevice(index));
             
             return card;
         }
 
-        // Reset to upload screen
-        function resetToUpload() {
-            previewScreen.classList.remove('active');
-            uploadScreen.classList.add('active');
+        // Select device
+        function selectDevice(index) {
+            document.querySelectorAll('.device-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.querySelectorAll('.device-card')[index].classList.add('selected');
             
-            // Clean up
+            document.getElementById('deviceSelector').value = index;
+            currentDeviceIndex = index;
+            currentDevice = tablets[index];
+            updateMainPreview();
+            generateRecommendations();
+        }
+
+        // Rotate device
+        window.rotateDevice = function(index) {
+            event.stopPropagation();
+            const miniTablet = document.getElementById(`mini-tablet-${index}`);
+            miniTablet.classList.toggle('landscape');
+        }
+
+        // Generate recommendations
+        function generateRecommendations() {
+            const recommendationsList = document.getElementById('recommendationsList');
+            const recommendations = [];
+            const fileSizeMB = fileSize / (1024 * 1024);
+            const device = currentDevice;
+            const compatibility = calculateEnhancedCompatibility(device);
+            
+            if (device.width < 800) {
+                recommendations.push({
+                    type: 'warning',
+                    text: `${device.name} has a small screen (${device.width}px wide). Ensure critical content is visible without horizontal scrolling.`
+                });
+            }
+            
+            if (compatibility.effectiveTextSize < 10) {
+                recommendations.push({
+                    type: 'warning',
+                    text: `Text may appear small on ${device.name} (estimated ${Math.round(compatibility.effectiveTextSize)}pt). Consider using larger font sizes.`
+                });
+            }
+            
+            if (device.performance === 'slow' && fileSizeMB > 5) {
+                recommendations.push({
+                    type: 'error',
+                    text: `This device has limited performance. Your ${fileSizeMB.toFixed(1)}MB PDF may load slowly. Consider optimizing file size.`
+                });
+            }
+            
+            if (device.brand === 'Amazon' && fileSizeMB > 10) {
+                recommendations.push({
+                    type: 'tip',
+                    text: `Fire tablets have limited RAM. For better performance, reduce PDF size below 10MB.`
+                });
+            }
+            
+            if (pdfDimensions.width > device.width) {
+                recommendations.push({
+                    type: 'tip',
+                    text: `PDF width (${pdfDimensions.width}px) exceeds device width (${device.width}px). Users will need to scroll horizontally.`
+                });
+            }
+            
+            recommendationsList.innerHTML = recommendations.map(rec => `
+                <div class="recommendation-item">
+                    <div class="recommendation-icon ${rec.type}">
+                        ${rec.type === 'tip' ? '💡' : rec.type === 'warning' ? '⚠️' : '❌'}
+                    </div>
+                    <div class="recommendation-text">${rec.text}</div>
+                </div>
+            `).join('');
+            
+            if (recommendations.length === 0) {
+                recommendationsList.innerHTML = `
+                    <div class="recommendation-item">
+                        <div class="recommendation-icon tip">✅</div>
+                        <div class="recommendation-text">Great! Your PDF is well-optimized for ${device.name}.</div>
+                    </div>
+                `;
+            }
+        }
+
+        // Set active filter
+        function setActiveFilter(filter) {
+            activeFilter = filter;
+            
+            document.querySelectorAll('.summary-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.filter === filter) {
+                    item.classList.add('active');
+                }
+            });
+            
+            document.querySelectorAll('.device-card').forEach((card, index) => {
+                const compat = deviceCompatibilities[index];
+                if (filter === 'all' || 
+                    (filter === 'excellent' && compat.status === 'excellent') ||
+                    (filter === 'good' && compat.status === 'good') ||
+                    (filter === 'issues' && compat.status === 'issues')) {
+                    card.classList.remove('filtered-out');
+                } else {
+                    card.classList.add('filtered-out');
+                }
+            });
+        }
+
+        // Export functions
+        function exportAllDevices() {
+            alert('This feature would capture screenshots of your PDF on all 25 devices and compile them into a downloadable package.');
+        }
+
+        function exportReport() {
+            if (!deviceCompatibilities || deviceCompatibilities.length === 0) {
+                alert('Please wait for the analysis to complete before exporting.');
+                return;
+            }
+            
+            let csv = 'Device,Brand,Resolution,PPI,Performance,Compatibility,Score,Text Size,Notes,Recommendations\n';
+            
+            tablets.forEach((tablet, index) => {
+                const compat = deviceCompatibilities[index];
+                
+                if (!compat) return;
+                
+                const recommendations = [];
+                const fileSizeMB = fileSize / (1024 * 1024);
+                
+                if (tablet.width < 800) {
+                    recommendations.push(`Small screen (${tablet.width}px) - ensure content fits`);
+                }
+                
+                if (compat.effectiveTextSize && compat.effectiveTextSize < 10) {
+                    recommendations.push(`Text may be small (${Math.round(compat.effectiveTextSize)}pt)`);
+                }
+                
+                if (tablet.performance === 'slow' && fileSizeMB > 5) {
+                    recommendations.push(`May load slowly (${fileSizeMB.toFixed(1)}MB PDF)`);
+                }
+                
+                if (pdfDimensions.width > tablet.width) {
+                    recommendations.push('Horizontal scrolling required');
+                }
+                
+                const recommendationText = recommendations.length > 0 ? recommendations.join('; ') : 'Well optimized';
+                
+                const escapeCsvField = (field) => {
+                    if (field === null || field === undefined) return '';
+                    field = String(field);
+                    if (field.includes(',') || field.includes('"') || field.includes('\n') || field.includes('\r') || field.includes(';')) {
+                        return '"' + field.replace(/"/g, '""') + '"';
+                    }
+                    return field;
+                };
+                
+                csv += [
+                    escapeCsvField(tablet.name),
+                    escapeCsvField(tablet.brand),
+                    escapeCsvField(`${tablet.width}x${tablet.height}`),
+                    escapeCsvField(tablet.ppi),
+                    escapeCsvField(tablet.performance),
+                    escapeCsvField(compat.status),
+                    escapeCsvField(`${compat.performanceScore}/10`),
+                    escapeCsvField(`${Math.round(compat.effectiveTextSize)}pt`),
+                    escapeCsvField(compat.message),
+                    escapeCsvField(recommendationText)
+                ].join(',') + '\n';
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `tablet-compatibility-report-${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // Reset to upload
+        function resetToUpload() {
+            document.getElementById('previewScreen').classList.remove('active');
+            document.getElementById('uploadScreen').classList.add('active');
+            
             if (currentPdfUrl) {
                 URL.revokeObjectURL(currentPdfUrl);
                 currentPdfUrl = null;
             }
             
-            // Reset file input
-            fileInput.value = '';
-            mainPdfViewer.src = '';
+            document.getElementById('fileInput').value = '';
+            document.getElementById('mainPdfViewer').src = '';
+            currentZoom = 100;
+            panX = 0;
+            panY = 0;
+            isPortrait = true;
+            currentDeviceIndex = 0;
+            currentDevice = tablets[0];
+            activeFilter = 'all';
         }
 
-        // Clean up on page unload
+        // Window resize handler
+        window.addEventListener('resize', () => {
+            if (document.getElementById('previewScreen').classList.contains('active')) {
+                updateMainPreview();
+            }
+        });
+
+        // Cleanup on page unload
         window.addEventListener('beforeunload', () => {
             if (currentPdfUrl) {
                 URL.revokeObjectURL(currentPdfUrl);
